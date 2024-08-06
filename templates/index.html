@@ -43,7 +43,7 @@
 
         .header .back {
             position: absolute;
-            left: 20px;
+            left: 30px;
             top: 70%;
             transform: translateY(-50%);
             padding: 10px 16px;
@@ -255,19 +255,25 @@
             </button>
         </div>
         <div class="footer">
-            <p>By Ojaswa Sharma, <a href="https://github.com/Sowoul/chess" style="color:#2aab40">Source Code</a></p>
+            <p>By Ojaswa Sharma, <a href="https://github.com/Sowoul/chess" style="color:#2aab40", target="_blank">Source Code</a></p>
         </div>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.1/socket.io.min.js"></script>
     <script>
+        var side = 0
         var socket = io.connect('/');
+        var xhr = new XMLHttpRequest()
+        xhr.open('GET', '/getSide', true)
+        xhr.send()        
+        xhr.onreadystatechange = function(){
+            side=xhr.responseText==="0"?0:1;
+        }
+        const sto = xhr.responseText
         var board = "";
         var start = "";
         var to = "";
-        var turn = "black";
-        var side = 0;
-    
+        
         socket.on('connect', function () {
             console.log("Connected");
             document.getElementById('status').textContent = 'Status: Connected';
@@ -275,13 +281,10 @@
     
         socket.on('getboard', function (msg) {
             board = msg.board;
-            if (turn === "white") turn = "black";
-            else turn = "white";
             renderBoard();
         });
     
         socket.on('failure', function (msg) {
-            console.log('a');
             document.getElementById('status').textContent = 'Status: ' + msg.reason;
             renderBoard();
         });
@@ -289,7 +292,6 @@
         function reset(event) {
             event.preventDefault();
             socket.emit('resetboard');
-            turn = "black";
             document.getElementById('status').textContent = 'Status: Board Reset';
         }
     
@@ -313,23 +315,15 @@
                     event.target.classList.add("glow");
                 } else if (to === "") {
                     to = event.target.id;
-                    if (!document.getElementById(start).classList.contains("white") && turn === "white") {
-                        document.getElementById('status').textContent = 'Status: Not Your Turn';
-                        renderBoard();
-                    } else if (document.getElementById(start).classList.contains("white") && turn === "black") {
-                        document.getElementById('status').textContent = 'Status: Not Your Turn';
-                        renderBoard();
-                    } else {
-                        socket.emit('move', {
-                            board: board,
-                            start: start,
-                            to: to
-                        });
-                        document.getElementById('status').textContent = 'Status: Move from ' + start + ' to ' + to;
+                    socket.emit('move', {
+                    board: board,
+                    start: start,
+                    to: to
+                    });
+                    document.getElementById('status').textContent = 'Status: Move from ' + start + ' to ' + to;
                     }
                 }
-            }
-        });
+            })
     
         function renderBoard() {
             var bd = document.getElementById("bd");
@@ -395,5 +389,4 @@
         }
     </script>
     </body>
-
 </html>
